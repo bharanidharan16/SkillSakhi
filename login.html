@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Student Login | SkillSakhi{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="auth-icon">🔐</span>
+      <p class="eyebrow">STUDENT PORTAL</p>
+      <h2>Welcome Back</h2>
+      <p class="muted">Sign in to access your personalized recommendations, track demo applications, and update your profile.</p>
+    </div>
+
+    <!-- QUICK DEMO LOGIN BOX -->
+    <div class="demo-login-box">
+      <div class="demo-box-content">
+        <span class="demo-box-icon">⚡</span>
+        <div>
+          <strong>Quick Demo Access</strong>
+          <small>Experience SkillSakhi with pre-configured student profile</small>
+        </div>
+      </div>
+      <button type="button" class="button button-sm button-demo" onclick="fillDemoCredentials()">
+        Use Demo Student (Priya)
+      </button>
+    </div>
+
+    <form class="auth-form" method="post" action="{{ url_for('login') }}">
+      <label>
+        Email Address
+        <input
+          type="email"
+          name="email"
+          id="loginEmail"
+          placeholder="e.g. priya@example.com"
+          required
+          autofocus
+        >
+      </label>
+
+      <label>
+        Password
+        <input
+          type="password"
+          name="password"
+          id="loginPassword"
+          placeholder="••••••••"
+          required
+        >
+      </label>
+
+      <button class="button button-block" type="submit">
+        Sign In to SkillSakhi ↗
+      </button>
+    </form>
+
+    <div class="auth-footer">
+      <p>Don't have an account yet? <a class="text-link" href="{{ url_for('register') }}">Register for free</a></p>
+      <p class="muted small-note">Demo password is <code>student123</code> for <code>priya@example.com</code></p>
+    </div>
+  </div>
+</section>
+
+<script>
+  function fillDemoCredentials() {
+    document.getElementById('loginEmail').value = 'bhavana@example.com';
+    document.getElementById('loginPassword').value = 'student123';
+  }
+</script>
+{% endblock %}

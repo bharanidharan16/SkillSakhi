@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}SkillSakhi | Student Dashboard & Internship Matches{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="hero">
+  <div>
+    <p class="eyebrow">YOUR CAREER, YOUR NEXT STEP</p>
+    <h1>
+      Find your path.<br>
+      <span>Build your future.</span>
+    </h1>
+    <p class="hero-copy">
+      SkillSakhi connects aspiring students with skills-first, gender-inclusive internships.
+      Discover matching roles, identify skills to grow, and build your career with confidence.
+    </p>
+
+    <div class="hero-actions">
+      <a class="button button-light" href="{{ url_for('internships') }}">
+        Explore opportunities ↗
+      </a>
+      {% if not current_user %}
+        <a class="button button-secondary-hero" href="{{ url_for('register') }}">
+          Create Student Profile
+        </a>
+      {% else %}
+        <a class="button button-secondary-hero" href="{{ url_for('profile') }}">
+          View Full Profile
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="hero-art" aria-hidden="true">
+    <div class="orbit orbit-one"></div>
+    <div class="orbit orbit-two"></div>
+    <div class="spark spark-one">✦</div>
+    <div class="spark spark-two">✧</div>
+
+    <div class="hero-card">
+  <span class="hero-card-icon">✺</span>
+  <strong>Skills → Opportunities</strong>
+  <small>SDG 8 · Decent Work & Economic Growth</small>
+</div>
+  </div>
+</section>
+
+<!-- WELCOME & STUDENT BANNER -->
+<section class="section-heading">
+  <div>
+    <p class="eyebrow">YOUR PERSONAL SPACE</p>
+    <h2>Welcome, {{ student_name }} 👋</h2>
+    <p class="muted">
+      {% if current_user %}
+        {{ current_user.education or "Student Profile" }} &bull; Focused on {{ current_user.interests or "Tech Opportunities" }}
+      {% else %}
+        Skills-first opportunity discovery. Enter your skills below to personalize your matches.
+      {% endif %}
+    </p>
+  </div>
+
+  {% if current_user %}
+    <a class="demo-label profile-edit-badge" href="{{ url_for('profile') }}">⚙ Edit Profile</a>
+  {% else %}
+    <span class="demo-label">✦ Guest Explorer Mode</span>
+  {% endif %}
+</section>
+
+<!-- DASHBOARD STATISTICS -->
+<section class="stats-grid" aria-label="Dashboard overview">
+  <article class="stat-card">
+    <div class="stat-icon stat-purple">✧</div>
+    <p>Total Opportunities</p>
+    <h3>{{ internships|length }}</h3>
+    <span>Available in demo catalog</span>
+  </article>
+
+  <article class="stat-card">
+    <div class="stat-icon stat-mint">✓</div>
+    <p>Your Listed Skills</p>
+    <h3>{{ student_skills|length }}</h3>
+    <span>{{ raw_skills }}</span>
+  </article>
+
+  <article class="stat-card">
+    <div class="stat-icon stat-peach">◎</div>
+    <p>Best Match Score</p>
+    <h3>{{ internships[0].score if internships else 0 }}%</h3>
+    <span>{{ internships[0].title if internships else "No match yet" }}</span>
+  </article>
+</section>
+
+<!-- STUDENT PROFILE / QUICK SKILL MATCH FINDER -->
+<section class="section-heading" id="profile">
+  <div>
+    <p class="eyebrow">CUSTOMIZE YOUR SKILLS</p>
+    <h2>{% if current_user %}Quick Skill Match Adjuster{% else %}Your Student Profile (Guest){% endif %}</h2>
+    <p class="muted">Update your skills to instantly recalculate match percentages across all roles.</p>
+  </div>
+
+  {% if not current_user %}
+    <a class="text-link" href="{{ url_for('login') }}">Log in to save permanently →</a>
+  {% endif %}
+</section>
+
+<form class="profile-form" action="{{ url_for('home') }}" method="get">
+  <label>
+    Display Name
+    <input
+      type="text"
+      name="name"
+      value="{{ student_name }}"
+      maxlength="40"
+      placeholder="Enter your name"
+      required
+    >
+  </label>
+
+  <label class="skills-input">
+    Your Skills
+    <span class="muted">(comma-separated: e.g. Python, SQL, Flask, Git)</span>
+    <input
+      type="text"
+      name="skills"
+      value="{{ raw_skills }}"
+      placeholder="Python, Git, SQL, Flask"
+      required
+    >
+  </label>
+
+  <button class="button" type="submit">
+    Update Matches ↗
+  </button>
+</form>
+
+<!-- QUICK SKILL PILLS -->
+<div class="quick-skills-container">
+  <span class="quick-skills-label">Add popular skills:</span>
+  <div class="quick-skills-list">
+    {% for skill in skill_options[:8] %}
+      <button
+        type="button"
+        class="quick-skill-pill"
+        onclick="addSkillToInput('{{ skill }}')"
+      >+ {{ skill }}</button>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- SKILL DEVELOPMENT TIP -->
+<section class="skill-tip">
+  <div class="tip-icon">💡</div>
+  <div>
+    <p class="eyebrow">SKILL ACCELERATOR · SDG  8</p>
+    <h3>Focus on skills to unlock opportunities</h3>
+    <p>
+      SkillSakhi matches candidates purely by skill capability, removing unconscious bias.
+      Check the "Skills to learn next" tag under each role to guide your upskilling journey!
+    </p>
+  </div>
+  <a class="text-link" href="{{ url_for('internships') }}">Explore All Roles →</a>
+</section>
+
+<!-- RECOMMENDATIONS HEADING -->
+<section class="section-heading">
+  <div>
+    <p class="eyebrow">MATCHED TO YOUR PROFILE</p>
+    <h2>Recommended Internships For You ✨</h2>
+    <p class="muted">
+      Ranked by skill compatibility. Explore requirements and identify your next career milestone.
+    </p>
+  </div>
+  <a class="text-link" href="{{ url_for('internships') }}">View all {{ internships|length }} listings →</a>
+</section>
+
+<!-- RECOMMENDATION CARDS -->
+<div class="cards">
+  {% for item in internships[:6] %}
+  <article class="internship-card">
+
+    <!-- TOP HEADER -->
+    <div class="card-top">
+      <span class="domain-icon">
+        {{ "⌘" if item.domain == "Software" else "◈" if item.domain == "Data" else "✺" if item.domain == "AI/ML" else "✧" }}
+      </span>
+      <span class="match">{{ item.score }}% match</span>
+    </div>
+
+    <!-- BEST MATCH BADGE -->
+    {% if loop.first and item.score > 0 %}
+      <span class="recommendation-badge">🏆 Top Recommendation</span>
+    {% endif %}
+
+    <!-- PROGRESS BAR -->
+    <div
+      class="match-progress"
+      role="progressbar"
+      aria-label="Skill match percentage"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="{{ item.score }}"
+    >
+      <div
+        class="match-progress-fill"
+        data-score="{{ item.score }}"
+      ></div>
+    </div>
+
+    <!-- ROLE DETAILS -->
+    <p class="company">{{ item.company }}</p>
+    <h3>{{ item.title }}</h3>
+    <p class="description">{{ item.description }}</p>
+
+    <!-- INCLUSIVE PERKS -->
+    {% if item.inclusive %}
+      <div class="inclusion-pill">
+        <span class="inclusion-pill-icon">🌸</span>
+        <span>{{ item.inclusion_perks or "Women Mentorship • Equal Opportunity" }}</span>
+      </div>
+    {% endif %}
+
+    <!-- REQUIRED SKILLS -->
+    <p class="skill-section-title">Required Skills</p>
+    <div class="tag-list">
+      {% for skill in item.skills_list %}
+        <span class="tag">{{ skill }}</span>
+      {% endfor %}
+    </div>
+
+    <!-- MATCHED SKILLS -->
+    <p class="skill-section-title">Your Matched Skills</p>
+    <div class="tag-list">
+      {% for skill in item.matched %}
+        <span class="tag matched-tag">✓ {{ skill }}</span>
+      {% else %}
+        <span class="muted small-note">No matching skills yet</span>
+      {% endfor %}
+    </div>
+
+    <!-- MISSING SKILLS -->
+    <p class="skill-section-title">Skills to Learn Next</p>
+    <div class="tag-list">
+      {% for skill in item.missing %}
+        <span class="tag missing-tag">+ {{ skill }}</span>
+      {% else %}
+        <span class="tag matched-tag">✓ All skills matched!</span>
+      {% endfor %}
+    </div>
+
+    <!-- ACTIONABLE LEARNING TIP -->
+    {% if item.missing %}
+      <div class="learning-tip">
+        💡 <strong>Upskilling Tip:</strong>
+        Learning <strong>{{ item.missing[0] }}</strong> will increase your match for this role.
+      </div>
+    {% endif %}
+
+    <!-- LEARN BEFORE YOU APPLY (RECOMMENDED LEARNING) -->
+    {% set learn = item.learning or (item|learning_info) or get_learning_info(item.title, item.skills, item.domain) %}
+    {% set yt_href = item.youtube_url or learn.youtube_url %}
+    {% set learn_title = item.learning_topic or learn.topic %}
+    {% set learn_query = item.search_query or learn.search_query %}
+    <div class="recommended-learning-box">
+      <div class="recommended-learning-header">
+        <span class="learning-icon">▶</span>
+        <div class="recommended-learning-content">
+          <span class="recommended-learning-label">Recommended Learning</span>
+          <strong class="recommended-learning-topic">{{ learn_title }}</strong>
+        </div>
+      </div>
+      <a
+        href="{{ yt_href }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="button-watch-video"
+        title="Watch {{ learn_title }} on YouTube"
+        data-topic="{{ learn_title }}"
+        data-query="{{ learn_query }}"
+      >
+        <span class="yt-play-icon">▶</span>
+        <span>Watch Learning Videos</span>
+        <span class="external-icon">↗</span>
+      </a>
+    </div>
+
+    <!-- INTERNSHIP META -->
+    <div class="meta-row">
+      <span>◷ {{ item.duration }}</span>
+      <span>⌖ {{ item.mode }}</span>
+      <span>₹ {{ item.stipend }}</span>
+    </div>
+
+    <!-- CARD ACTIONS -->
+    <div class="card-footer card-actions">
+      <div class="action-buttons-group">
+        {% if item.id in applied_ids %}
+          <span class="badge-applied">✓ Applied</span>
+        {% else %}
+          <form action="{{ url_for('apply_internship', internship_id=item.id) }}" method="post" style="display:inline;">
+            <button class="button button-sm button-apply" type="submit">Apply (Demo)</button>
+          </form>
+        {% endif %}
+
+        <form action="{{ url_for('save_internship', internship_id=item.id) }}" method="post" style="display:inline;">
+          <button class="button-icon-save" type="submit" title="Save/Bookmark">
+            {{ "★ Saved" if item.id in saved_ids else "☆ Save" }}
+          </button>
+        </form>
+      </div>
+      <span class="location-tag">{{ item.location }}</span>
+    </div>
+
+  </article>
+  {% else %}
+    <div class="empty-state">
+      <span>✧</span>
+      <h3>No opportunities listed yet</h3>
+      <p>Check back soon for new openings.</p>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- BRIDGE YOUR SKILL GAP SECTION -->
+{% if top_missing_skills %}
+<section class="gap-analysis-section">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">ACCELERATE YOUR LEARNING</p>
+      <h2>Bridge Your Skill Gap 🚀</h2>
+      <p class="muted">Most requested skills in roles matching your interests that you haven't listed yet.</p>
+    </div>
+  </div>
+
+  <div class="gap-grid">
+    {% for skill in top_missing_skills %}
+      <div class="gap-card">
+        <div class="gap-icon">🎯</div>
+        <h4>{{ skill }}</h4>
+        <p>In high demand across several current internship listings.</p>
+        <button
+          type="button"
+          class="button button-outline button-sm"
+          onclick="addSkillToInput('{{ skill }}')"
+        >
+          Add to My Skills +
+        </button>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- SDG 5 IMPACT SECTION -->
+<section class="impact-panel">
+  <div class="impact-icon">♀</div>
+  <div>
+    <p class="eyebrow">OUR SDG 8 COMMITMENT</p>
+
+<h2>Every student deserves an opportunity to grow.</h2>
+
+<p>
+  SkillSakhi supports <strong>UN Sustainable Development Goal 8 (Decent Work and Economic Growth)</strong>
+  by helping students discover internship opportunities and develop career-ready skills.
+  We encourage skill development, accessible career exploration, and awareness of employment
+  opportunities through internship listings, smart search and filters, and learning resources.
+</p>
+  <div class="impact-tags-list">
+  <span class="impact-tag">✦ UN SDG 8: DECENT WORK AND ECONOMIC GROWTH</span>
+  <span class="impact-tag">✦ Internship Discovery</span>
+  <span class="impact-tag">✦ Career-Ready Skill Development</span>
+  <span class="impact-tag">✦ Employment Opportunity Awareness</span>
+</div>
+  </div>
+</section>
+
+<!-- DISCLAIMER -->
+<p class="disclaimer">
+  SkillSakhi is an academic prototype created for the Smart India Hackathon (SIH).
+  Organizations, vacancies, and stipend figures shown are fictional demo entries
+  designed to illustrate internship discovery, skill development, and alignment
+  with UN Sustainable Development Goal 8 (Decent Work and Economic Growth).
+</p>
+
+<script>
+  function addSkillToInput(skillName) {
+    const skillsInput = document.querySelector('input[name="skills"]');
+    if (!skillsInput) return;
+    let current = skillsInput.value.split(',').map(s => s.trim()).filter(s => s);
+    if (!current.map(s => s.toLowerCase()).includes(skillName.toLowerCase())) {
+      current.push(skillName);
+      skillsInput.value = current.join(', ');
+      skillsInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      skillsInput.focus();
+    }
+  }
+</script>
+
+{% endblock %}

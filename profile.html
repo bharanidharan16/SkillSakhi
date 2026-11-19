@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile | SkillSakhi{% endblock %}
+
+{% block content %}
+<section class="profile-hero">
+  <div class="profile-avatar-circle">👩‍💻</div>
+  <div class="profile-hero-info">
+    <p class="eyebrow">STUDENT PROFILE</p>
+    <h2>{{ current_user.name }}</h2>
+    <p class="muted">
+      {{ current_user.education or "Student" }} &bull; {{ current_user.email }}
+    </p>
+  </div>
+  <div class="profile-completeness-card">
+    <div class="completeness-header">
+      <small>Profile Strength</small>
+      <strong>{{ completeness }}%</strong>
+    </div>
+    <div class="match-progress" role="progressbar" aria-valuenow="{{ completeness }}" aria-valuemin="0" aria-valuemax="100">
+      <div class="match-progress-fill" data-score="{{ completeness }}"></div>
+    </div>
+    <span class="completeness-hint">
+      {% if completeness >= 90 %}
+        🌟 Great job! Your profile is complete and ready for matching.
+      {% else %}
+        💡 Add skills, education, and bio to increase your match accuracy.
+      {% endif %}
+    </span>
+  </div>
+</section>
+
+<div class="profile-grid">
+  <!-- LEFT: EDIT PROFILE FORM -->
+  <section class="profile-card profile-form-card">
+    <div class="card-heading-simple">
+      <h3>Edit Your Profile</h3>
+      <p class="muted">Keep your skills and interests updated for optimal recommendations.</p>
+    </div>
+
+    <form class="auth-form" method="post" action="{{ url_for('profile') }}">
+      <div class="form-row">
+        <label>
+          Full Name
+          <input
+            type="text"
+            name="name"
+            value="{{ current_user.name }}"
+            required
+            maxlength="60"
+          >
+        </label>
+
+        <label>
+          Email Address
+          <input
+            type="email"
+            value="{{ current_user.email }}"
+            disabled
+            title="Email cannot be changed"
+          >
+        </label>
+      </div>
+
+      <label>
+        Education / Degree / University
+        <input
+          type="text"
+          name="education"
+          value="{{ current_user.education }}"
+          placeholder="e.g. B.E AIML , 2nd YEAR"
+        >
+      </label>
+
+      <label class="skills-input-field">
+        Skills
+        <span class="muted">(comma-separated: e.g. Python, SQL, Flask, Git)</span>
+        <input
+          type="text"
+          id="profileSkillsInput"
+          name="skills"
+          value="{{ current_user.skills }}"
+          required
+        >
+      </label>
+
+      <!-- Clickable Skill Helpers -->
+      <div class="quick-skills-container">
+        <span class="quick-skills-label">Click to add in-demand skills:</span>
+        <div class="quick-skills-list">
+          {% for s in all_skills %}
+            <button
+              type="button"
+              class="quick-skill-pill"
+              onclick="addProfileSkill('{{ s }}')"
+            >+ {{ s }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>
+          Career Interests
+          <input
+            type="text"
+            name="interests"
+            value="{{ current_user.interests }}"
+            placeholder="e.g. Software, Data, AI/ML, Design"
+          >
+        </label>
+
+        <label>
+          Preferred Work Mode
+          <select name="preferred_mode">
+            {% for m in ['Any', 'Remote', 'Hybrid', 'On-site'] %}
+              <option value="{{ m }}" {% if current_user.preferred_mode == m %}selected{% endif %}>
+                {{ m }}
+              </option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <label>
+        Bio & Career Aspirations
+        <textarea
+          name="bio"
+          rows="3"
+          placeholder="Describe your goals and learning journey..."
+        >{{ current_user.bio }}</textarea>
+      </label>
+
+      <button class="button" type="submit">
+        Save Profile Changes ↗
+      </button>
+    </form>
+  </section>
+
+  <!-- RIGHT: APPLICATIONS & SAVED OPPORTUNITIES -->
+  <aside class="profile-sidebar">
+
+    <!-- SUBMITTED APPLICATIONS -->
+    <div class="profile-card">
+      <div class="card-heading-simple">
+        <h3>My Applications ({{ applied_internships|length }})</h3>
+        <p class="muted">Demo applications submitted through SkillSakhi.</p>
+      </div>
+
+      {% if applied_internships %}
+        <div class="activity-list">
+          {% for app in applied_internships %}
+            <article class="activity-item">
+              <div>
+                <strong>{{ app.title }}</strong>
+                <p class="muted small-note">{{ app.company }} &bull; {{ app.location }}</p>
+              </div>
+              <span class="badge-status">{{ app.status or "Submitted" }}</span>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-compact">
+          <p class="muted">You haven't submitted any demo applications yet.</p>
+          <a class="text-link" href="{{ url_for('internships') }}">Browse listings →</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- SAVED INTERNSHIPS -->
+    <div class="profile-card">
+      <div class="card-heading-simple">
+        <h3>Saved Internships ({{ saved_internships|length }})</h3>
+        <p class="muted">Opportunities bookmarked for later review.</p>
+      </div>
+
+      {% if saved_internships %}
+        <div class="activity-list">
+          {% for save in saved_internships %}
+            <article class="activity-item">
+              <div>
+                <strong>{{ save.title }}</strong>
+                <p class="muted small-note">{{ save.company }} &bull; {{ save.stipend }}</p>
+              </div>
+              <a class="button button-sm button-outline" href="{{ url_for('internships', q=save.title) }}">View ↗</a>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-compact">
+          <p class="muted">No bookmarked internships yet.</p>
+          <a class="text-link" href="{{ url_for('internships') }}">Explore roles to save →</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- SDG 5 WOMEN IN TECH CARD -->
+    <div class="profile-card mentor-card">
+      <div class="mentor-badge">🌸 SDG 8 Decent Work And Economic Growth</div>
+      <h4>Mentorship & Support</h4>
+      <p class="muted">
+        SkillSakhi connects women students with guidance circles, resume feedback,
+        and fair compensation negotiation workshops.
+      </p>
+      <span class="impact-tag">✦ Everyone Gets OPPURTUNITIES!!</span>
+    </div>
+
+  </aside>
+</div>
+
+<script>
+  function addProfileSkill(skill) {
+    const input = document.getElementById('profileSkillsInput');
+    let current = input.value.split(',').map(s => s.trim()).filter(s => s);
+    if (!current.map(s => s.toLowerCase()).includes(skill.toLowerCase())) {
+      current.push(skill);
+      input.value = current.join(', ');
+    }
+  }
+</script>
+{% endblock %}

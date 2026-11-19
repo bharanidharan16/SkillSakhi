@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block title %}Explore Internships | SkillSakhi Inclusive Portal{% endblock %}
+
+{% block content %}
+
+<!-- PAGE HERO -->
+<section class="explore-hero">
+  <div class="explore-copy">
+    <p class="eyebrow">YOUR FUTURE STARTS HERE</p>
+    <h1>Discover work that<br><span>fits your skills.</span></h1>
+    <p>
+      Browse vetted internship opportunities, compare skill requirements, and find inclusive
+      environments designed to support your career growth.
+    </p>
+    <div class="explore-highlights">
+      <span>✦ Skills-First Matching</span>
+      <span>🌸 SDG 8 DECENT WORK AAND ECONOMIC GROWTH</span>
+      <span>✓ Verified Demo Opportunities</span>
+    </div>
+  </div>
+
+  <div class="explore-art" aria-hidden="true">
+    <div class="explore-orbit"></div>
+    <div class="explore-art-card">
+      <span class="explore-art-icon">✧</span>
+      <strong>Inclusive Careers</strong>
+      <small>Learn · Grow · Excel</small>
+    </div>
+    <span class="explore-spark spark-a">✦</span>
+    <span class="explore-spark spark-b">✧</span>
+  </div>
+</section>
+
+<!-- SEARCH AND FILTERS -->
+<section class="explore-search-section">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">OPPORTUNITY FINDER</p>
+      <h2>Find your perfect match</h2>
+      <p class="muted">Filter by domain, preferred work style, and SDG 5 inclusion initiatives.</p>
+    </div>
+  </div>
+
+  <form class="filter-form explore-filter" method="get" action="{{ url_for('internships') }}">
+    <label class="search-field">
+      Search opportunities
+      <input
+        type="search"
+        name="q"
+        value="{{ q }}"
+        placeholder="Search title, skills, company (e.g. Python, Remote, NovaTech)..."
+        aria-label="Search internship opportunities"
+      >
+    </label>
+
+    <label>
+      Domain
+      <select name="domain">
+        <option value="All" {% if selected_domain == "All" %}selected{% endif %}>All domains</option>
+        {% for d in domains %}
+          <option value="{{ d }}" {% if selected_domain == d %}selected{% endif %}>
+            {{ d }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Work mode
+      <select name="mode">
+        {% for m in ["All", "Remote", "Hybrid", "On-site"] %}
+          <option value="{{ m }}" {% if selected_mode == m %}selected{% endif %}>
+            {{ "All work modes" if m == "All" else m }}
+          </option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label class="checkbox-label" title="Show only companies offering women mentorship, equal pay transparency, and supportive culture">
+      <input
+        type="checkbox"
+        name="inclusive"
+        value="1"
+        {% if inclusive_only %}checked{% endif %}
+        onchange="this.form.submit()"
+      >
+      <span>🌸 SDG 8 RISE THE ECONOMIC GROWTH</span>
+    </label>
+
+    <button class="button" type="submit">Find opportunities ↗</button>
+    <a class="reset-link" href="{{ url_for('internships') }}">Reset filters</a>
+  </form>
+</section>
+
+<!-- RESULTS HEADER -->
+<section class="results-header">
+  <div>
+    <p class="eyebrow">DISCOVERY LIST</p>
+    <h2>Available Opportunities</h2>
+    <p class="results-count">
+      {{ internships|length }} sample
+      {{ "opportunity" if internships|length == 1 else "opportunities" }} found
+      {% if q %} for &ldquo;<strong>{{ q }}</strong>&rdquo;{% endif %}
+      {% if inclusive_only %} with SDG 8 REDUCE THE UNEMPLOYMENT{% endif %}
+    </p>
+
+
+
+    
+  </div>
+  <span class="demo-label">✦ Real-time Matching</span>
+</section>
+
+<!-- RESULTS CARDS -->
+{% if internships %}
+<div class="cards explore-cards">
+  {% for item in internships %}
+  <article class="internship-card explore-card">
+
+    <!-- CARD TOP -->
+    <div class="card-top">
+      <span class="domain-icon">
+        {{ "⌘" if item.domain == "Software" else "◈" if item.domain == "Data" else "✺" if item.domain == "AI/ML" else "✧" }}
+      </span>
+      <div class="card-top-badges">
+        <span class="domain-badge">{{ item.domain }}</span>
+        {% if item.score > 0 %}
+          <span class="match">{{ item.score }}% match</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- MATCH PROGRESS BAR -->
+    {% if item.score > 0 %}
+    <div
+      class="match-progress"
+      role="progressbar"
+      aria-label="Skill match score"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="{{ item.score }}"
+    >
+      <div class="match-progress-fill" data-score="{{ item.score }}"></div>
+    </div>
+    {% endif %}
+
+    <p class="company">{{ item.company }}</p>
+    <h3>{{ item.title }}</h3>
+    <p class="description">{{ item.description }}</p>
+
+    <!-- INCLUSION PERKS -->
+    {% if item.inclusive %}
+      <div class="inclusion-pill">
+        <span class="inclusion-pill-icon">🌸</span>
+        <span>{{ item.inclusion_perks or "Women-in-Tech Mentorship • Equal Pay Certified" }}</span>
+      </div>
+    {% endif %}
+
+    <!-- REQUIRED SKILLS -->
+    <p class="skill-section-title">Required Skills</p>
+    <div class="tag-list">
+      {% for skill in item.skills_list %}
+        {% if skill in item.matched %}
+          <span class="tag matched-tag">✓ {{ skill }}</span>
+        {% else %}
+          <span class="tag">{{ skill }}</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- LEARN BEFORE YOU APPLY (RECOMMENDED LEARNING) -->
+    {% set learn = item.learning or (item|learning_info) or get_learning_info(item.title, item.skills, item.domain) %}
+    {% set yt_href = item.youtube_url or learn.youtube_url %}
+    {% set learn_title = item.learning_topic or learn.topic %}
+    {% set learn_query = item.search_query or learn.search_query %}
+    <div class="recommended-learning-box">
+      <div class="recommended-learning-header">
+        <span class="learning-icon">▶</span>
+        <div class="recommended-learning-content">
+          <span class="recommended-learning-label">Recommended Learning</span>
+          <strong class="recommended-learning-topic">{{ learn_title }}</strong>
+        </div>
+      </div>
+      <a
+        href="{{ yt_href }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="button-watch-video"
+        title="Watch {{ learn_title }} on YouTube"
+        data-topic="{{ learn_title }}"
+        data-query="{{ learn_query }}"
+      >
+        <span class="yt-play-icon">▶</span>
+        <span>Watch Learning Videos</span>
+        <span class="external-icon">↗</span>
+      </a>
+    </div>
+
+    <!-- OPPORTUNITY DETAILS -->
+    <div class="opportunity-details">
+      <div class="detail-item">
+        <span class="detail-icon">◷</span>
+        <div>
+          <small>Duration</small>
+          <strong>{{ item.duration }}</strong>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <span class="detail-icon">⌖</span>
+        <div>
+          <small>Work mode</small>
+          <strong>{{ item.mode }}</strong>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <span class="detail-icon">₹</span>
+        <div>
+          <small>Stipend</small>
+          <strong>{{ item.stipend }}</strong>
+        </div>
+      </div>
+
+      <div class="detail-item">
+        <span class="detail-icon">📍</span>
+        <div>
+          <small>Location</small>
+          <strong>{{ item.location }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- CARD ACTIONS -->
+    <div class="card-footer card-actions">
+      <div class="action-buttons-group">
+        {% if item.id in applied_ids %}
+          <span class="badge-applied">✓ Applied</span>
+        {% else %}
+          <form action="{{ url_for('apply_internship', internship_id=item.id) }}" method="post" style="display:inline;">
+            <button class="button button-sm button-apply" type="submit">Apply (Demo)</button>
+          </form>
+        {% endif %}
+
+        <form action="{{ url_for('save_internship', internship_id=item.id) }}" method="post" style="display:inline;">
+          <button class="button-icon-save" type="submit" title="Save/Bookmark">
+            {{ "★ Saved" if item.id in saved_ids else "☆ Save" }}
+          </button>
+        </form>
+      </div>
+
+      <span class="demo-label">DEMO</span>
+    </div>
+
+  </article>
+  {% endfor %}
+</div>
+
+{% else %}
+<section class="empty-state explore-empty">
+  <span>⌕</span>
+  <h2>No matching opportunities yet</h2>
+  <p>
+    Try searching for different keywords, select &ldquo;All domains&rdquo;, or reset your filters
+    to view all opportunities.
+  </p>
+  <a class="button" href="{{ url_for('internships') }}">View All Opportunities ↗</a>
+</section>
+{% endif %}
+
+<!-- SDG 5 IMPACT BANNER -->
+<section class="impact-panel explore-impact">
+  <div class="impact-icon">♀</div>
+  <div>
+    <p class="eyebrow">CAREER OPPORTUNITIES · SDG 8</p>
+
+<h2>Every student deserves an opportunity to build a better future.</h2>
+
+<p>
+  SkillSakhi supports UN Sustainable Development Goal 8 (Decent Work and Economic Growth)
+  by helping students discover internship opportunities and develop career-ready skills.
+  Through internship listings, skill-based exploration, and learning resources,
+  we encourage students to improve their knowledge, prepare for employment,
+  and explore opportunities for professional growth.
+</p>
+    <div class="impact-tags-list">
+      <span class="impact-tag">✦ UN Sustainable Development Goal 8</span>
+      <span class="impact-tag">✦ Transparent Stipends</span>
+      <span class="impact-tag">✦ Mentorship for Women</span>
+    </div>
+  </div>
+</section>
+
+<!-- DISCLAIMER -->
+<p class="disclaimer">
+  Student-project prototype. All company names, listings, and stipends are fictional demo data
+  created to illustrate skill matching and SDG 8 inclusion principles.
+</p>
+
+{% endblock %}
